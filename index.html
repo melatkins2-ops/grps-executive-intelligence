@@ -624,7 +624,11 @@ function go(id){
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.view)));
 
 function getRecentSchools(){try{return JSON.parse(localStorage.getItem('execintel_recent')||'[]')}catch(e){return []}}
-function rememberRecentSchool(name){const rows=[name,...getRecentSchools().filter(x=>x!==name)].slice(0,5);localStorage.setItem('execintel_recent',JSON.stringify(rows));renderRecentSchools()}
+function rememberRecentSchool(name){
+ const rows=[name,...getRecentSchools().filter(x=>x!==name)].slice(0,5);
+ try{localStorage.setItem('execintel_recent',JSON.stringify(rows))}catch(e){}
+ if(typeof renderRecentSchoolLaunch==='function')renderRecentSchoolLaunch();
+}
 function getSavedMemory(){
  try{return JSON.parse(localStorage.getItem('execintel_memory')||'[]')}catch(e){return []}
 }
@@ -1186,7 +1190,7 @@ function schoolTopView(s){
 }
 function openSchool(name){
  const s=allSchools.find(x=>x.name===name);if(!s)return;
- localStorage.setItem('execintel_school',s.name);rememberRecentSchool(s.name);
+ try{localStorage.setItem('execintel_school',s.name)}catch(e){}
  const hasSignal=!String(s.focus||'').startsWith('No current cross-CSA signal');
  const d=document.getElementById('schoolDossier');
  d.innerHTML=`<div class="card">
@@ -1232,6 +1236,7 @@ function openSchool(name){
 
  <div class="sticky-school-actions noprint"><button class="btn primary" onclick="window.print()">Print / Save Brief</button><button class="btn" onclick="quickRememberSchool(${JSON.stringify(s.name)})">Remember Follow-up</button><button class="btn" onclick="document.getElementById('globalAsk').value='What should I know about ${esc(s.name)}?';askExecutive()">Ask About This School</button><button class="btn" onclick="go('home')">Home</button></div>
  </div>`;
+ try{rememberRecentSchool(s.name)}catch(e){console.warn('Recent-school history unavailable',e)}
  d.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
@@ -1982,7 +1987,7 @@ function askExecutive(){
 }
 document.getElementById('globalAsk').addEventListener('keydown',e=>{if(e.key==='Enter')askExecutive()});
 
-renderSchools();setupCompare();renderPatterns();renderConnections();renderRecentSchools();renderSavedMemory();renderExecutiveSignals();updateKPIs();
+renderSchools();setupCompare();renderPatterns();renderConnections();renderRecentSchoolLaunch();renderSavedMemory();renderExecutiveSignals();updateKPIs();
 const hash=location.hash.replace('#','');if(titles[hash])go(hash);
 const last=localStorage.getItem('execintel_school');
 
