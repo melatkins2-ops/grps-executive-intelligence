@@ -743,9 +743,11 @@ html,body{max-width:100%;overflow-x:hidden}
       <div class="card">
         <div class="filters">
           <input id="schoolSearch" type="search" placeholder="Search school, principal, KSSN coordinator…" oninput="renderSchools()">
-          <select id="kssnFilter" onchange="renderSchools()">
+          <select id="gradeFilter" onchange="renderSchools()" aria-label="Filter schools by grade band">
             <option value="">All Schools</option>
-            <option value="KSSN school">KSSN Schools</option>
+            <option value="K-5">K–5</option>
+            <option value="6-8">6–8</option>
+            <option value="9-12">9–12</option>
           </select>
         </div>
         <div id="schoolGrid" class="schoolgrid"></div>
@@ -1020,9 +1022,27 @@ function renderExecutiveSignals(){
  </div>`;
 }
 
+
+function gradeBandMatches(s,band){
+ if(!band)return true;
+ const span=String(s.gradeSpan||s.level||'').toUpperCase().replace(/PK|PREK|PRESCHOOL/g,'K').replace(/[–—]/g,'-').replace(/\s/g,'');
+ let lo=null,hi=null;
+ if(/^\d+$/.test(span)){lo=hi=parseInt(span,10)}
+ else{
+   const m=span.match(/^(K|\d+)-(K|\d+)$/);
+   if(m){lo=m[1]==='K'?0:parseInt(m[1],10);hi=m[2]==='K'?0:parseInt(m[2],10)}
+ }
+ if(lo===null||hi===null){
+   if(span==='K'){lo=hi=0}
+   else return false;
+ }
+ const target=band==='K-5'?[0,5]:band==='6-8'?[6,8]:band==='9-12'?[9,12]:null;
+ return target ? lo<=target[1] && hi>=target[0] : true;
+}
+
 function renderSchools(){
- const q=norm(document.getElementById('schoolSearch').value),k=document.getElementById('kssnFilter').value;
- const rows=allSchools.filter(s=>(!q||norm([s.name,s.principal,s.kssn,s.gradeSpan,s.programIdentity].join(' ')).includes(q))&&(!k||s.kssnStatus===k));
+ const q=norm(document.getElementById('schoolSearch').value),band=document.getElementById('gradeFilter').value;
+ const rows=allSchools.filter(s=>(!q||norm([s.name,s.principal,s.kssn,s.gradeSpan,s.programIdentity].join(' ')).includes(q))&&gradeBandMatches(s,band));
  const grid=document.getElementById('schoolGrid');
  grid.innerHTML=rows.sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<button class="school" type="button" data-school="${esc(s.name)}"><div class="eyebrow">${s.kssnStatus==='KSSN school'?'KSSN · ':''}${esc(s.gradeSpan||s.level)}</div><h3>${esc(s.name)}</h3><div class="mini">${esc(s.principal)}</div></button>`).join('');
  grid.querySelectorAll('[data-school]').forEach(b=>b.addEventListener('click',()=>openSchool(b.dataset.school)));
