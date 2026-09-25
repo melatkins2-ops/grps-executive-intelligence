@@ -1,0 +1,8 @@
+.csa-visit-controls{margin:1rem 0}.csa-visit-controls label{display:block;font-weight:700;margin-bottom:.35rem}
+#csaBuildingSelect{width:100%;max-width:520px;padding:.75rem;border:1px solid #cfd8df;border-radius:10px;background:#fff;font:inherit}
+.csa-summary{margin:.8rem 0 1rem;color:#65727d;font-size:.95rem}
+.csa-staff-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.8rem}
+.csa-staff-card{border:1px solid #d9e0e5;border-radius:12px;padding:1rem;background:#fff}
+.csa-staff-card h3{margin:.2rem 0 .35rem;color:#123b5d;font-size:1.05rem}
+.csa-area{font-size:.75rem;font-weight:800;letter-spacing:.04em;color:#65727d;text-transform:uppercase}
+.csa-contact{margin-top:.5rem;color:#123b5d;font-weight:600}
