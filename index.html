@@ -617,6 +617,10 @@ html,body{max-width:100%;overflow-x:hidden}
     bottom:10px!important;
   }
 }
+
+.meeting-save-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;margin:-4px -4px 16px;background:#fff;border:1px solid #d7e0ea;border-left:4px solid #f47c20;border-radius:10px;box-shadow:0 4px 12px rgba(20,54,91,.08)}
+.meeting-save-bar .primary{font-size:15px;padding:10px 18px}
+@media(max-width:700px){.meeting-save-bar{top:0;align-items:flex-start}.meeting-save-bar span{font-size:12px}.meeting-save-bar .primary{white-space:nowrap}}
 </style>
 
 </head>
@@ -1412,6 +1416,7 @@ function meetingModeHTML(s){
  const prep=schoolExecutivePrep(s), focus=schoolFocusSummary(s), draft=getVisitDraft(s.name);
  const qs=[...(s.visitQuestions||[]),...(prep.test||[])].filter((q,i,a)=>q&&a.indexOf(q)===i).slice(0,4);
  return `<div class="meeting-mode" id="meetingMode">
+   <div class="meeting-save-bar noprint"><span><strong>Active visit</strong> · Draft autosaves on this device</span><button class="primary" onclick="closeVisitCurrent()">Save Visit</button></div>
    <div class="eyebrow">Meeting Mode</div><h2>${esc(s.name)}</h2>
    <div class="mini">Principal: ${esc(s.principal)}${s.kssnStatus==='KSSN school'?` · KSSN: ${esc(s.kssn)}`:''}</div>
    <div class="exec-bottomline"><div class="eyebrow">Keep in mind</div><h3>${esc(focus.headline)}</h3><p>${esc(focus.next)}</p></div>
@@ -1425,7 +1430,7 @@ function meetingModeHTML(s){
    <details class="secondary-tools" style="margin-top:12px"><summary>Questions to carry</summary><div class="secondary-tools-body">${qs.map((q,i)=>`<div class="meeting-question"><b>${i+1}.</b> ${esc(q)}</div>`).join('')}</div></details>
    <div class="visit-history"><div class="eyebrow">Previous visits</div>${schoolVisitHistoryHTML(s.name)}</div>
    <div class="meeting-toolbar noprint">
-    <button class="primary" onclick="closeVisit(${JSON.stringify(s.name)})">Close Visit & Save Record</button>
+    <button class="primary" onclick="closeVisitCurrent()">Save Visit</button>
     <button onclick="showSchoolBriefCurrent()">1-Page Brief</button>
     <button onclick="exitMeetingMode()">Exit Meeting Mode</button>
    </div>
@@ -1463,6 +1468,11 @@ function exitMeetingMode(){
  if(name)openSchool(name);
 }
 function saveMeetingNote(name){saveVisitDraft(name)}
+function closeVisitCurrent(){
+ const name=activeMeetingSchool || currentSchoolName();
+ if(!name){alert('Open a school first.');return;}
+ closeVisit(name);
+}
 function closeVisit(name){
  saveVisitDraft(name); const d=getVisitDraft(name);
  const notes=(d.meetingNoteText||'').trim(), voice=(d.visitPrincipalVoice||'').trim(), followup=(d.visitFollowup||'').trim(), owner=(d.visitOwner||'').trim(), due=d.visitDue||'';
@@ -1472,8 +1482,10 @@ function closeVisit(name){
  if(followup){const rows=getSavedMemory();rows.unshift({id:Date.now()+1,school:name,note:followup,type:'school follow-up',status:'Follow-up',owner,due,created:new Date().toLocaleDateString(),updated:new Date().toISOString()});putSavedMemory(rows)}
  try{localStorage.removeItem('execintel_visit_draft_'+name)}catch(e){}
  renderSavedMemory();renderExecutiveSignals();updateKPIs();
- alert('Visit saved. It is stored in this browser on this device and the follow-up was added to Executive Memory.');
- exitMeetingMode();openSchool(name);
+ activeMeetingSchool='';
+ document.body.classList.remove('meeting-active');
+ alert('Visit saved to School Visit History on this device.' + (followup ? ' Follow-up was also added to Executive Memory.' : ''));
+ openSchool(name);
 }
 function schoolTopView(s){
  const d=disciplineSummary(s.name), m=schoolIndexPlans[s.name], p=currentSchoolPlans[s.name];
