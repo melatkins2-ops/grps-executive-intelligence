@@ -1431,20 +1431,23 @@ function meetingModeHTML(s){
    </div>
  </div>`;
 }
+let activeMeetingSchool='';
 function enterMeetingMode(name){
  const s=allSchools.find(x=>x.name===name); if(!s)return;
  const d=document.getElementById('schoolDossier'); if(!d)return;
- const oldBrief=document.getElementById('printBrief');if(oldBrief)oldBrief.remove();
- let holder=document.getElementById('meetingMode'); if(holder)holder.remove();
- let card=null; try{card=d.querySelector(':scope > .card')}catch(e){card=d.querySelector('.card')}
- if(card)card.insertAdjacentHTML('afterbegin',meetingModeHTML(s)); else return;
- document.body.classList.add('meeting-active');
+ activeMeetingSchool=name;
+ document.body.classList.remove('meeting-active');
+ d.innerHTML=`<div class="card meeting-shell">${meetingModeHTML(s)}</div>`;
  ['meetingNoteText','visitPrincipalVoice','visitFollowup','visitOwner','visitDue'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',()=>saveVisitDraft(name))});
+ const first=document.getElementById('meetingNoteText'); if(first)setTimeout(()=>first.focus(),50);
  window.scrollTo({top:0,behavior:'smooth'});
 }
 function exitMeetingMode(){
- const m=document.getElementById('meetingMode'); if(m){const name=m.querySelector('h2')?.textContent||'';if(name)saveVisitDraft(name)}
- document.body.classList.remove('meeting-active'); if(m)m.remove();
+ const name=activeMeetingSchool || (document.getElementById('meetingMode')?.querySelector('h2')?.textContent||'');
+ if(name)saveVisitDraft(name);
+ activeMeetingSchool='';
+ document.body.classList.remove('meeting-active');
+ if(name)openSchool(name);
 }
 function saveMeetingNote(name){saveVisitDraft(name)}
 function closeVisit(name){
