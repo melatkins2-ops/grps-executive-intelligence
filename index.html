@@ -985,7 +985,7 @@ function buildSchoolBrief(s){
    <div class="brief-section"><div class="eyebrow">People / Functions Around the Work</div>${prep.people.slice(0,5).map(x=>`<p>${esc(x)}</p>`).join('')}</div>
    ${(()=>{const v=getVisitHistory().find(x=>x.school===s.name);return v?`<div class="brief-section"><div class="eyebrow">Most Recent Visit · ${esc(v.date)}</div>${v.notes?`<p><b>Notes:</b> ${esc(v.notes)}</p>`:''}${v.principalVoice?`<p><b>Principal / building voice:</b> ${esc(v.principalVoice)}</p>`:''}${v.followup?`<p><b>Follow-up:</b> ${esc(v.followup)}${v.owner?` · ${esc(v.owner)}`:''}${v.due?` · ${esc(v.due)}`:''}</p>`:''}</div>`:''})()}
    <div class="brief-section"><div class="source"><b>Boundary:</b> This brief summarizes connected evidence. It does not establish root cause, implementation fidelity, or effectiveness.</div></div>
-   <div class="noprint" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn primary" onclick="showSchoolBrief(${JSON.stringify(s.name)})">1-Page Brief</button><button class="btn" onclick="enterMeetingMode(${JSON.stringify(s.name)})">Meeting Mode</button><button class="btn" onclick="document.getElementById('printBrief').remove()">Close Brief</button></div>
+   <div class="noprint" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn primary" onclick="showSchoolBriefCurrent()">1-Page Brief</button><button class="btn" onclick="enterMeetingModeCurrent()">Meeting Mode</button><button class="btn" onclick="document.getElementById('printBrief').remove()">Close Brief</button></div>
  </div>`;
 }
 function showSchoolBrief(name){
@@ -1385,8 +1385,8 @@ function renderFocusSummary(s){
    <div class="eyebrow">Executive Focus</div><h3>${esc(f.headline)}</h3><p>${esc(f.why)}</p>
    <div class="focus-actions">
     <button class="primary-focus" onclick="safeScroll('walkin')">Prepare for Conversation</button>
-    <button onclick="enterMeetingMode(${JSON.stringify(s.name)})">Meeting Mode</button>
-    <button onclick="showSchoolBrief(${JSON.stringify(s.name)})">1-Page Brief</button>
+    <button onclick="enterMeetingModeCurrent()">Meeting Mode</button>
+    <button onclick="showSchoolBriefCurrent()">1-Page Brief</button>
     <button onclick="(()=>{const e=document.getElementById('evidenceHub');if(e){e.open=true;safeScroll('evidenceHub')}})()">Check Evidence</button>
     <button onclick="quickRememberSchool(${JSON.stringify(s.name)})">Save Follow-up</button>
    </div>
@@ -1426,12 +1426,25 @@ function meetingModeHTML(s){
    <div class="visit-history"><div class="eyebrow">Previous visits</div>${schoolVisitHistoryHTML(s.name)}</div>
    <div class="meeting-toolbar noprint">
     <button class="primary" onclick="closeVisit(${JSON.stringify(s.name)})">Close Visit & Save Record</button>
-    <button onclick="showSchoolBrief(${JSON.stringify(s.name)})">1-Page Brief</button>
+    <button onclick="showSchoolBriefCurrent()">1-Page Brief</button>
     <button onclick="exitMeetingMode()">Exit Meeting Mode</button>
    </div>
  </div>`;
 }
 let activeMeetingSchool='';
+function currentSchoolName(){
+ try{return localStorage.getItem('execintel_school')||''}catch(e){return ''}
+}
+function enterMeetingModeCurrent(){
+ const name=currentSchoolName();
+ if(!name){alert('Open a school first.');return;}
+ enterMeetingMode(name);
+}
+function showSchoolBriefCurrent(){
+ const name=currentSchoolName();
+ if(!name){alert('Open a school first.');return;}
+ showSchoolBrief(name);
+}
 function enterMeetingMode(name){
  const s=allSchools.find(x=>x.name===name); if(!s)return;
  const d=document.getElementById('schoolDossier'); if(!d)return;
