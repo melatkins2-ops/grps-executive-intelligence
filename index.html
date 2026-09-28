@@ -383,6 +383,13 @@ body.offline .offline-banner{display:block}
 @media(min-width:1400px){
  .main{max-width:1320px!important;margin-left:auto!important;margin-right:auto!important}
 }
+
+/* Meeting Mode v5: independent overlay so school-list rendering cannot replace the active visit workspace */
+.meeting-mode-overlay{position:fixed;inset:0;z-index:9999;background:#f5f7fa;overflow:auto;padding:18px}
+.meeting-mode-panel{max-width:1100px;margin:0 auto;background:#fff;border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.18);min-height:calc(100vh - 36px)}
+.meeting-mode-panel-inner{padding:22px}
+body.meeting-active{overflow:hidden}
+@media(max-width:700px){.meeting-mode-overlay{padding:0}.meeting-mode-panel{border-radius:0;min-height:100vh}.meeting-mode-panel-inner{padding:14px}}
 </style>
 
 <style id="v32-mobile-layout-fix">
@@ -1452,20 +1459,26 @@ function showSchoolBriefCurrent(){
 }
 function enterMeetingMode(name){
  const s=allSchools.find(x=>x.name===name); if(!s)return;
- const d=document.getElementById('schoolDossier'); if(!d)return;
  activeMeetingSchool=name;
- document.body.classList.remove('meeting-active');
- d.innerHTML=`<div class="card meeting-shell">${meetingModeHTML(s)}</div>`;
+ let overlay=document.getElementById('meetingModeOverlay');
+ if(!overlay){
+   overlay=document.createElement('div');
+   overlay.id='meetingModeOverlay';
+   overlay.className='meeting-mode-overlay';
+   document.body.appendChild(overlay);
+ }
+ overlay.innerHTML=`<div class="meeting-mode-panel"><div class="meeting-mode-panel-inner">${meetingModeHTML(s)}</div></div>`;
+ document.body.classList.add('meeting-active');
  ['meetingNoteText','visitPrincipalVoice','visitFollowup','visitOwner','visitDue'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',()=>saveVisitDraft(name))});
  const first=document.getElementById('meetingNoteText'); if(first)setTimeout(()=>first.focus(),50);
- window.scrollTo({top:0,behavior:'smooth'});
+ overlay.scrollTop=0;
 }
 function exitMeetingMode(){
- const name=activeMeetingSchool || (document.getElementById('meetingMode')?.querySelector('h2')?.textContent||'');
+ const name=activeMeetingSchool || currentSchoolName();
  if(name)saveVisitDraft(name);
  activeMeetingSchool='';
  document.body.classList.remove('meeting-active');
- if(name)openSchool(name);
+ const overlay=document.getElementById('meetingModeOverlay'); if(overlay)overlay.remove();
 }
 function saveMeetingNote(name){saveVisitDraft(name)}
 function closeVisitCurrent(){
@@ -1484,6 +1497,7 @@ function closeVisit(name){
  renderSavedMemory();renderExecutiveSignals();updateKPIs();
  activeMeetingSchool='';
  document.body.classList.remove('meeting-active');
+ const overlay=document.getElementById('meetingModeOverlay'); if(overlay)overlay.remove();
  alert('Visit saved to School Visit History on this device.' + (followup ? ' Follow-up was also added to Executive Memory.' : ''));
  openSchool(name);
 }
