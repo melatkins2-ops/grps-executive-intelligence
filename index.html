@@ -339,9 +339,11 @@ button,input,select,textarea{font:inherit} button{cursor:pointer} a{color:inheri
 body.meeting-active .topbar,body.meeting-active .sidebar,body.meeting-active .mobile-home{display:none!important}
 body.meeting-active .main{max-width:900px!important;padding-top:16px!important}
 body.meeting-active .view:not(#school){display:none!important}
-body.meeting-active #school>.view-intro,body.meeting-active #school>.card,body.meeting-active #schoolDossier>.card> :not(.meeting-mode){display:none!important}
+body.meeting-active #school>.view-intro,body.meeting-active #school>.card,body.meeting-active #schoolDossier>.card> :not(.meeting-mode):not(.brief-panel){display:none!important}
 body.meeting-active #schoolDossier>.card{border:0!important;padding:0!important}
-@media(max-width:760px){.meeting-question{font-size:16px}.meeting-toolbar button{flex:1 1 45%;min-height:44px}}
+.save-status{font-size:12px;color:var(--muted);margin-top:6px}.save-status strong{color:var(--navy)}
+.visit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.visit-field label{display:block;font-size:11px;font-weight:850;color:var(--navy);margin-bottom:5px}.visit-field textarea,.visit-field input{width:100%;box-sizing:border-box}.visit-field textarea{min-height:72px}.visit-notes textarea{min-height:180px;font-size:15px;line-height:1.5}.visit-history{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.visit-record{padding:9px 0;border-top:1px solid var(--line);font-size:12px}.visit-record:first-child{border-top:0}
+@media(max-width:760px){.meeting-question{font-size:16px}.meeting-toolbar button{flex:1 1 45%;min-height:44px}.visit-grid{grid-template-columns:1fr}.visit-notes textarea{min-height:220px}}
 
 /* v30 field-test hardening */
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
@@ -981,6 +983,7 @@ function buildSchoolBrief(s){
    </div>
    <div class="brief-section"><div class="eyebrow">Questions to Carry In</div>${prep.test.slice(0,3).map((q,i)=>`<p><b>${i+1}.</b> ${esc(q)}</p>`).join('')}</div>
    <div class="brief-section"><div class="eyebrow">People / Functions Around the Work</div>${prep.people.slice(0,5).map(x=>`<p>${esc(x)}</p>`).join('')}</div>
+   ${(()=>{const v=getVisitHistory().find(x=>x.school===s.name);return v?`<div class="brief-section"><div class="eyebrow">Most Recent Visit · ${esc(v.date)}</div>${v.notes?`<p><b>Notes:</b> ${esc(v.notes)}</p>`:''}${v.principalVoice?`<p><b>Principal / building voice:</b> ${esc(v.principalVoice)}</p>`:''}${v.followup?`<p><b>Follow-up:</b> ${esc(v.followup)}${v.owner?` · ${esc(v.owner)}`:''}${v.due?` · ${esc(v.due)}`:''}</p>`:''}</div>`:''})()}
    <div class="brief-section"><div class="source"><b>Boundary:</b> This brief summarizes connected evidence. It does not establish root cause, implementation fidelity, or effectiveness.</div></div>
    <div class="noprint" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn primary" onclick="showSchoolBrief(${JSON.stringify(s.name)})">1-Page Brief</button><button class="btn" onclick="enterMeetingMode(${JSON.stringify(s.name)})">Meeting Mode</button><button class="btn" onclick="document.getElementById('printBrief').remove()">Close Brief</button></div>
  </div>`;
@@ -1391,18 +1394,38 @@ function renderFocusSummary(s){
  </div>`;
 }
 
+function getVisitDraft(name){
+ try{return JSON.parse(localStorage.getItem('execintel_visit_draft_'+name)||'{}')}catch(e){return {}}
+}
+function saveVisitDraft(name){
+ const ids=['meetingNoteText','visitPrincipalVoice','visitFollowup','visitOwner','visitDue']; const d={school:name,updated:new Date().toISOString()};
+ ids.forEach(id=>{const el=document.getElementById(id);if(el)d[id]=el.value});
+ try{localStorage.setItem('execintel_visit_draft_'+name,JSON.stringify(d));const st=document.getElementById('visitSaveStatus');if(st)st.innerHTML='<strong>Draft saved</strong> on this device · '+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});}catch(e){const st=document.getElementById('visitSaveStatus');if(st)st.textContent='Draft could not be saved in this browser.'}
+}
+function getVisitHistory(){try{return JSON.parse(localStorage.getItem('execintel_visits')||'[]')}catch(e){return []}}
+function putVisitHistory(rows){try{localStorage.setItem('execintel_visits',JSON.stringify(rows.slice(0,250)))}catch(e){}}
+function schoolVisitHistoryHTML(name,limit=3){
+ const rows=getVisitHistory().filter(x=>x.school===name).slice(0,limit); if(!rows.length)return '<div class="mini">No closed visits saved yet.</div>';
+ return rows.map(x=>`<div class="visit-record"><b>${esc(x.date)}</b>${x.notes?`<br>${esc(x.notes)}`:''}${x.followup?`<br><b>Follow-up:</b> ${esc(x.followup)}${x.owner?` · ${esc(x.owner)}`:''}${x.due?` · ${esc(x.due)}`:''}`:''}</div>`).join('');
+}
 function meetingModeHTML(s){
- const prep=schoolExecutivePrep(s), focus=schoolFocusSummary(s);
+ const prep=schoolExecutivePrep(s), focus=schoolFocusSummary(s), draft=getVisitDraft(s.name);
  const qs=[...(s.visitQuestions||[]),...(prep.test||[])].filter((q,i,a)=>q&&a.indexOf(q)===i).slice(0,4);
  return `<div class="meeting-mode" id="meetingMode">
    <div class="eyebrow">Meeting Mode</div><h2>${esc(s.name)}</h2>
    <div class="mini">Principal: ${esc(s.principal)}${s.kssnStatus==='KSSN school'?` · KSSN: ${esc(s.kssn)}`:''}</div>
    <div class="exec-bottomline"><div class="eyebrow">Keep in mind</div><h3>${esc(focus.headline)}</h3><p>${esc(focus.next)}</p></div>
-   <div class="eyebrow" style="margin-top:12px">Questions to carry</div>
-   ${qs.map((q,i)=>`<div class="meeting-question"><b>${i+1}.</b> ${esc(q)}</div>`).join('')}
-   <div class="meeting-note"><div class="eyebrow">What changed or surfaced?</div><textarea id="meetingNoteText" placeholder="Optional note to yourself. Capture only what is worth carrying forward."></textarea></div>
+   <div class="meeting-note visit-notes"><div class="eyebrow">Visit Notes</div><textarea id="meetingNoteText" placeholder="Capture what you are seeing, hearing, learning, or do not want to lose.">${esc(draft.meetingNoteText||'')}</textarea><div id="visitSaveStatus" class="save-status"><strong>Autosave is on.</strong> Drafts are stored in this browser on this device.</div></div>
+   <div class="visit-grid">
+    <div class="visit-field"><label>Principal / building voice</label><textarea id="visitPrincipalVoice" placeholder="What did the principal or team emphasize?">${esc(draft.visitPrincipalVoice||'')}</textarea></div>
+    <div class="visit-field"><label>Follow-up / action</label><textarea id="visitFollowup" placeholder="What needs to happen next?">${esc(draft.visitFollowup||'')}</textarea></div>
+    <div class="visit-field"><label>Owner</label><input id="visitOwner" placeholder="Who owns the follow-up?" value="${esc(draft.visitOwner||'')}"></div>
+    <div class="visit-field"><label>Due date</label><input id="visitDue" type="date" value="${esc(draft.visitDue||'')}"></div>
+   </div>
+   <details class="secondary-tools" style="margin-top:12px"><summary>Questions to carry</summary><div class="secondary-tools-body">${qs.map((q,i)=>`<div class="meeting-question"><b>${i+1}.</b> ${esc(q)}</div>`).join('')}</div></details>
+   <div class="visit-history"><div class="eyebrow">Previous visits</div>${schoolVisitHistoryHTML(s.name)}</div>
    <div class="meeting-toolbar noprint">
-    <button class="primary" onclick="saveMeetingNote(${JSON.stringify(s.name)})">Save Note</button>
+    <button class="primary" onclick="closeVisit(${JSON.stringify(s.name)})">Close Visit & Save Record</button>
     <button onclick="showSchoolBrief(${JSON.stringify(s.name)})">1-Page Brief</button>
     <button onclick="exitMeetingMode()">Exit Meeting Mode</button>
    </div>
@@ -1411,24 +1434,30 @@ function meetingModeHTML(s){
 function enterMeetingMode(name){
  const s=allSchools.find(x=>x.name===name); if(!s)return;
  const d=document.getElementById('schoolDossier'); if(!d)return;
- let holder=document.getElementById('meetingMode');
- if(holder)holder.remove();
+ const oldBrief=document.getElementById('printBrief');if(oldBrief)oldBrief.remove();
+ let holder=document.getElementById('meetingMode'); if(holder)holder.remove();
  let card=null; try{card=d.querySelector(':scope > .card')}catch(e){card=d.querySelector('.card')}
- if(card)card.insertAdjacentHTML('afterbegin',meetingModeHTML(s));
+ if(card)card.insertAdjacentHTML('afterbegin',meetingModeHTML(s)); else return;
  document.body.classList.add('meeting-active');
+ ['meetingNoteText','visitPrincipalVoice','visitFollowup','visitOwner','visitDue'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',()=>saveVisitDraft(name))});
  window.scrollTo({top:0,behavior:'smooth'});
 }
 function exitMeetingMode(){
- document.body.classList.remove('meeting-active');
- const m=document.getElementById('meetingMode'); if(m)m.remove();
+ const m=document.getElementById('meetingMode'); if(m){const name=m.querySelector('h2')?.textContent||'';if(name)saveVisitDraft(name)}
+ document.body.classList.remove('meeting-active'); if(m)m.remove();
 }
-function saveMeetingNote(name){
- const box=document.getElementById('meetingNoteText'); if(!box)return;
- const note=box.value.trim(); if(!note)return;
- const rows=getSavedMemory();
- rows.unshift({id:Date.now(),school:name,note,type:'meeting note',status:'Open',created:new Date().toLocaleDateString(),updated:new Date().toISOString()});
- putSavedMemory(rows);box.value='';renderSavedMemory();renderExecutiveSignals();updateKPIs();
- alert(`Meeting note saved for ${name}`);
+function saveMeetingNote(name){saveVisitDraft(name)}
+function closeVisit(name){
+ saveVisitDraft(name); const d=getVisitDraft(name);
+ const notes=(d.meetingNoteText||'').trim(), voice=(d.visitPrincipalVoice||'').trim(), followup=(d.visitFollowup||'').trim(), owner=(d.visitOwner||'').trim(), due=d.visitDue||'';
+ if(!notes&&!voice&&!followup){if(!confirm('There are no visit notes yet. Close this visit anyway?'))return;}
+ const rec={id:Date.now(),school:name,date:new Date().toLocaleDateString(),created:new Date().toISOString(),notes,principalVoice:voice,followup,owner,due};
+ const visits=getVisitHistory();visits.unshift(rec);putVisitHistory(visits);
+ if(followup){const rows=getSavedMemory();rows.unshift({id:Date.now()+1,school:name,note:followup,type:'school follow-up',status:'Follow-up',owner,due,created:new Date().toLocaleDateString(),updated:new Date().toISOString()});putSavedMemory(rows)}
+ try{localStorage.removeItem('execintel_visit_draft_'+name)}catch(e){}
+ renderSavedMemory();renderExecutiveSignals();updateKPIs();
+ alert('Visit saved. It is stored in this browser on this device and the follow-up was added to Executive Memory.');
+ exitMeetingMode();openSchool(name);
 }
 function schoolTopView(s){
  const d=disciplineSummary(s.name), m=schoolIndexPlans[s.name], p=currentSchoolPlans[s.name];
@@ -1478,6 +1507,7 @@ function openSchool(name){
    <details class="evidence-drawer"><summary>School Index / MICIP</summary><div class="drawer-body">${renderMICIPPlan(s.name)}</div></details>
    <details class="evidence-drawer"><summary>MI School Data Lens</summary><div class="drawer-body">${renderMISchoolDataLens(s.name)}</div></details>
  </div></details>
+ <details class="secondary-tools section"><summary>School Visit History</summary><div class="secondary-tools-body"><div class="source"><b>Storage:</b> Closed visit records are currently saved in this browser on this device.</div><div class="visit-history">${schoolVisitHistoryHTML(s.name,10)}</div></div></details>
  <details class="secondary-tools section">
  <summary>Capture an executive decision</summary>
  <div class="secondary-tools-body"><div class="decision-capture"><div class="eyebrow">Executive Decision</div><p class="mini">Save only a decision worth carrying forward. This does not create a task for anyone else.</p><textarea id="decisionText" placeholder="What did I decide?"></textarea><button class="btn primary" style="margin-top:7px" onclick="captureSchoolDecision(${JSON.stringify(s.name)})">Save Decision</button></div></div>
