@@ -630,6 +630,15 @@ html,body{max-width:100%;overflow-x:hidden}
 @media(max-width:700px){.meeting-save-bar{top:0;align-items:flex-start}.meeting-save-bar span{font-size:12px}.meeting-save-bar .primary{white-space:nowrap}}
 </style>
 
+<link rel="icon" href="favicon.png">
+<style id="ei-nov-2026-qa">
+/* Collapsed drawers take no space (the closed "More tools" grid left an empty gap on phones) */
+details:not([open]) > :not(summary){display:none!important}
+/* Phone Home button appears after scrolling so it does not cover "See Full Briefing" */
+.mobile-home{transition:opacity .2s}
+body:not(.eiScrolled) .mobile-home{opacity:0;pointer-events:none}
+</style>
+<script>(function(){function u(){if(document.body)document.body.classList.toggle('eiScrolled',window.scrollY>400)}window.addEventListener('scroll',u,{passive:true});document.addEventListener('DOMContentLoaded',u);})();</script>
 </head>
 <body><div class="offline-banner" id="offlineBanner">You are offline. Saved memory still works on this device; linked web sources may not load.</div>
 <div class="shell">
@@ -938,9 +947,12 @@ function renderSavedMemory(){
 }
 function activeSignals(){return allSchools.filter(s=>!String(s.focus||'').startsWith('No current cross-CSA signal'))}
 function updateKPIs(){
- document.getElementById('kpiKssn').textContent=allSchools.filter(s=>s.kssnStatus==='KSSN school').length;
- document.getElementById('kpiMemory').textContent=getSavedMemory().length;
- document.getElementById('kpiSignals').textContent=activeSignals().length;
+ // The KPI tiles were removed from the start page; skip any that are not on the page.
+ // (A missing tile used to throw here and stop the rest of startup: hash links, resume work, connectivity.)
+ const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+ set('kpiKssn',allSchools.filter(s=>s.kssnStatus==='KSSN school').length);
+ set('kpiMemory',getSavedMemory().length);
+ set('kpiSignals',activeSignals().length);
 }
 
 
