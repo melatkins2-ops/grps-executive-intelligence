@@ -644,7 +644,7 @@ body:not(.eiScrolled) .mobile-home{opacity:0;pointer-events:none}
 <div class="shell">
 <aside class="sidebar" id="sidebar">
   <div class="brand">
-<img class="grps-official-logo" src="https://grps-cdn.fxbrt.com/downloads/communications/grpsmychoicelogo.png" alt="GRPS My Choice — Grand Rapids Public Schools">
+<img class="grps-official-logo" src="images/grps-logo.png" alt="GRPS My Choice — Grand Rapids Public Schools">
 <div class="eyebrow">Private leadership workspace</div>
 <h1>Executive Intelligence</h1>
 <p>Built for one executive user. Intelligence first. No staff updates required.</p>
@@ -663,7 +663,7 @@ body:not(.eiScrolled) .mobile-home{opacity:0;pointer-events:none}
   <div class="topbar">
     <button class="btn mobilemenu" onclick="document.getElementById('sidebar').classList.toggle('open')">Menu</button>
     <div><strong id="viewTitle">My Executive Briefing</strong><div class="mini" id="viewSub">What deserves my attention today?</div></div>
-    <div class="askmini"><input id="globalAsk" onkeydown="if(event.key==='Enter'){askExecutive()}" placeholder="Ask: What should I know about Ottawa Hills Middle? Where is attendance highest? What do I remember?"><button class="btn primary" onclick="askExecutive()">Ask</button></div>
+    <div class="askmini"><input aria-label="Ask a question" id="globalAsk" onkeydown="if(event.key==='Enter'){askExecutive()}" placeholder="Ask: What should I know about Ottawa Hills Middle? Where is attendance highest? What do I remember?"><button class="btn primary" onclick="askExecutive()">Ask</button></div>
   </div>
   <div class="ask-shortcuts">
     <span>Try:</span>
@@ -764,7 +764,7 @@ body:not(.eiScrolled) .mobile-home{opacity:0;pointer-events:none}
       </div>
       <div class="card">
         <div class="filters">
-          <input id="schoolSearch" type="search" placeholder="Search school, principal, KSSN coordinator…" oninput="renderSchools()">
+          <input aria-label="Search schools" id="schoolSearch" type="search" placeholder="Search school, principal, KSSN coordinator…" oninput="renderSchools()">
           <select id="gradeFilter" onchange="renderSchools()" aria-label="Filter schools by grade band">
             <option value="">All Schools</option>
             <option value="K-5">K–5</option>
@@ -785,9 +785,9 @@ body:not(.eiScrolled) .mobile-home{opacity:0;pointer-events:none}
       </div>
       <div class="card">
         <div class="comparebox">
-          <div><label class="mini">School A</label><select id="compareA"></select></div>
+          <div><label class="mini">School A</label><select aria-label="School A" id="compareA"></select></div>
           <button class="btn primary" onclick="runCompare()">Compare</button><button class="btn" onclick="clearCompare()">Clear</button>
-          <div><label class="mini">School B</label><select id="compareB"></select></div>
+          <div><label class="mini">School B</label><select aria-label="School B" id="compareB"></select></div>
         </div>
         <div id="compareResult" class="focus-result"></div>
       </div>
